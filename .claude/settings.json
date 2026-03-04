@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "devedup-rl": {
+      "source": {
+        "source": "github",
+        "repo": "dedged/devedup-rl"
+      }
+    }
+  }
+}
