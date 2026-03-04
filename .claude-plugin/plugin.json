@@ -1,0 +1,19 @@
+{
+  "name": "devedup-typescript",
+  "version": "0.1.0",
+  "description": "Standardized development workflow plugin with TDD enforcement, model-aware agent routing, and TypeScript-first patterns for side projects.",
+  "author": {
+    "name": "dedge",
+    "url": "https://github.com/dedged"
+  },
+  "repository": "https://github.com/dedged/devedup-typescript",
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "tdd",
+    "typescript",
+    "planning",
+    "code-review",
+    "testing"
+  ]
+}
