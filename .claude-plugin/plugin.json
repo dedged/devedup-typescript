@@ -1,7 +1,7 @@
 {
   "name": "devedup-rl",
-  "version": "0.1.0",
-  "description": "Standardized development workflow plugin with TDD enforcement, model-aware agent routing, and TypeScript-first patterns for side projects.",
+  "version": "0.2.0",
+  "description": "Development workflow plugin for the Raid-Ledger monorepo (NestJS + React + Drizzle + Zod). TDD enforcement, dual test runners, workspace-aware agent routing, and contract-first patterns.",
   "author": {
     "name": "dedge",
     "url": "https://github.com/dedged"
@@ -9,10 +9,13 @@
   "repository": "https://github.com/dedged/devedup-rl",
   "license": "MIT",
   "keywords": [
-    "workflow",
+    "raid-ledger",
+    "monorepo",
+    "nestjs",
+    "react",
+    "drizzle",
+    "zod",
     "tdd",
-    "typescript",
-    "planning",
     "code-review",
     "testing"
   ]

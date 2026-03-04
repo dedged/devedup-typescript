@@ -1,6 +1,6 @@
 # Code Review Checklist
 
-Structured checklist for code review. Evaluate each dimension and report findings.
+Structured checklist for code review in the Raid-Ledger monorepo.
 
 ## 1. Correctness
 
@@ -9,22 +9,27 @@ Structured checklist for code review. Evaluate each dimension and report finding
 - [ ] Edge cases are handled
 - [ ] No off-by-one errors
 - [ ] No race conditions in concurrent/async code
+- [ ] Contract schemas match between api and web usage
+- [ ] Drizzle queries return expected shapes
+- [ ] NestJS dependency injection is wired correctly
 
 ## 2. Security
 
-- [ ] User input is validated at system boundaries
-- [ ] No SQL injection vectors (parameterized queries)
-- [ ] No command injection (avoid `child_process` with user input, use `execFile`)
-- [ ] No XSS vectors in any HTML output
+- [ ] User input is validated at system boundaries (Zod via ZodValidationPipe)
+- [ ] No SQL injection vectors (use Drizzle query builder, no raw SQL)
+- [ ] No command injection
+- [ ] No XSS vectors in React output (no `dangerouslySetInnerHTML`)
 - [ ] No secrets or credentials in code
-- [ ] No hardcoded URLs or environment-specific values
-- [ ] Dependencies are pinned to specific versions
+- [ ] NestJS guards applied to all protected endpoints (`@UseGuards`)
+- [ ] Role-based access enforced where required
+- [ ] Auth tokens handled securely (httpOnly cookies, no localStorage for sensitive data)
 
 ## 3. Performance
 
-- [ ] No N+1 query patterns
+- [ ] No N+1 query patterns in Drizzle queries
 - [ ] No unnecessary allocations in hot paths
 - [ ] No blocking operations in async code
+- [ ] TanStack Query keys are specific enough to avoid over-fetching
 - [ ] Appropriate data structures chosen
 - [ ] No unbounded loops or recursion
 
@@ -36,6 +41,7 @@ Structured checklist for code review. Evaluate each dimension and report finding
 - [ ] Single responsibility per module
 - [ ] No dead code or commented-out code
 - [ ] No TODO/FIXME without a linked issue
+- [ ] Drizzle schema changes have corresponding migrations
 
 ## 5. Testing
 
@@ -45,15 +51,27 @@ Structured checklist for code review. Evaluate each dimension and report finding
 - [ ] Tests are independent (no order dependency)
 - [ ] Mocking is limited to external dependencies
 - [ ] Coverage meets 80% minimum
+- [ ] Backend tests use `jest.fn()`, frontend tests use `vi.fn()`
+- [ ] No runner mixing (Jest assertions in api, Vitest assertions in web)
+- [ ] Test factories used for consistent test data
 
 ## 6. Standards
 
 - [ ] Type annotations on all function signatures
 - [ ] JSDoc comments on all exported functions
-- [ ] `npx eslint .` passes with no errors
-- [ ] `npx tsc --noEmit` passes with no errors
+- [ ] Lint passes: `npx eslint . --cwd api` / `npx eslint . --cwd web`
+- [ ] Type check passes: `npx tsc --noEmit -p api` / `npx tsc --noEmit -p web`
 - [ ] Conventional commit messages
-- [ ] No `console.log` statements (use structured logging)
+- [ ] No `console.log` statements (use NestJS Logger in api)
+- [ ] Imports from `@raid-ledger/contract`, not direct paths
+
+## 7. Contract Integrity
+
+- [ ] New/modified Zod schemas are in `packages/contract`
+- [ ] Contract changes are backwards-compatible (or migration plan documented)
+- [ ] Contract is built before api/web changes depend on it
+- [ ] Both api and web import the same schema version
+- [ ] No duplicate type definitions across workspaces
 
 ## Finding Severity Guide
 
