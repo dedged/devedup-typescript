@@ -25,7 +25,7 @@ Create a technical specification for: $ARGUMENTS
 ## Prerequisites
 
 A plan should exist in `docs/plans/` before writing a spec. If no plan exists,
-inform the user and suggest running `/devedup-typescript:plan` first.
+inform the user and suggest running `/devedup-rl:plan` first.
 
 ## Spec Template
 
