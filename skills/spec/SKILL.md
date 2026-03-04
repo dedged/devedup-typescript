@@ -1,9 +1,8 @@
 ---
 name: spec
 description: >
-  Create a detailed technical specification from an existing plan. Use after
-  planning to produce implementation-ready specs with API contracts, data models,
-  and test scenarios.
+  Create a detailed technical specification for Raid-Ledger. Covers contract
+  layer (Zod schemas), NestJS module structure, and React component hierarchy.
 argument-hint: "[feature-name]"
 user-invocable: true
 context: fork
@@ -16,11 +15,16 @@ Create a technical specification for: $ARGUMENTS
 
 ## Instructions
 
-1. Read the relevant plan from `docs/plans/`
-2. Transform the plan into a detailed technical specification
-3. Define API contracts, data models, and interfaces
-4. Write testable acceptance criteria with Given/When/Then scenarios
-5. Save the spec to `docs/specs/<feature-name>.md` using the spec template
+1. Read Raid-Ledger documentation first:
+   - `CLAUDE.md` for project conventions
+   - `project-context.md` for architecture overview
+   - `TESTING.md` for testing approach
+2. Read the relevant plan from `docs/plans/`
+3. Define Zod schemas for the contract layer (`packages/contract`)
+4. Specify NestJS module structure (controller, service, repository, guards)
+5. Specify React component hierarchy (components, hooks, stores, forms)
+6. Write testable acceptance criteria with Given/When/Then scenarios
+7. Save the spec to `docs/specs/<feature-name>.md` using the spec template
 
 ## Prerequisites
 

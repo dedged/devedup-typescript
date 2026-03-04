@@ -1,9 +1,9 @@
 ---
 name: plan
 description: >
-  Create a structured project or feature plan. Use when starting a new project,
-  planning a feature, or making architectural decisions. Produces milestones,
-  technical decisions, and risk assessment.
+  Create a structured feature plan for Raid-Ledger. Reads RL docs first,
+  identifies affected workspaces and contract changes, then produces milestones
+  with acceptance criteria.
 argument-hint: "[feature-name]"
 user-invocable: true
 context: fork
@@ -16,11 +16,16 @@ Create a structured plan for: $ARGUMENTS
 
 ## Instructions
 
-1. Gather context by reading existing code, docs, and requirements in this project
-2. Research relevant patterns, libraries, and prior art
-3. Identify constraints, dependencies, and trade-offs
-4. Break the work into milestones with clear deliverables
-5. Save the plan to `docs/plans/<feature-name>.md` using the plan template
+1. Read Raid-Ledger documentation first:
+   - `CLAUDE.md` for project conventions
+   - `project-context.md` for architecture overview
+   - `TESTING.md` for testing approach
+2. Gather context by reading existing code, docs, and requirements
+3. Identify which workspaces are affected (`packages/contract`, `api`, `web`)
+4. Identify contract changes (new/modified Zod schemas needed)
+5. Research relevant patterns, libraries, and prior art
+6. Break the work into milestones (contract first, then api/web)
+7. Save the plan to `docs/plans/<feature-name>.md` using the plan template
 
 ## Plan Template
 

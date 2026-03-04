@@ -1,9 +1,8 @@
 ---
 name: pr
 description: >
-  Generate a pull request description from the current branch changes.
-  Summarizes changes, testing status, and links to relevant specs.
-  Use when ready to open a PR.
+  Generate a Raid-Ledger pull request description grouped by workspace.
+  Includes dual test runner checklist and auto-merge reminder.
 argument-hint: "[options]"
 user-invocable: true
 context: fork
@@ -19,12 +18,15 @@ Generate a pull request: $ARGUMENTS
 1. Run `git diff main...HEAD --stat` to understand scope
 2. Run `git log main...HEAD --oneline` to read commit history
 3. Read changed files to understand the changes
-4. Read the relevant spec file from `docs/specs/` if one exists
-5. Generate a structured PR description using the template at references/pr-template.md
-6. If `gh` CLI is available and the user requests it, create the PR with `gh pr create`
+4. Identify which workspaces are affected (`packages/contract`, `api`, `web`)
+5. Read the relevant spec file from `docs/specs/` if one exists
+6. Generate a workspace-grouped PR description using the template at references/pr-template.md
+7. If `gh` CLI is available and the user requests it:
+   a. Create the PR with `gh pr create`
+   b. Enable auto-merge: `gh pr merge --auto --squash`
 
 ## Options
 
 - Default: generate PR description and display it
-- "and create it on GitHub": also run `gh pr create`
+- "and create it on GitHub": also run `gh pr create` and enable auto-merge
 - "targeting <branch>": specify a non-default base branch

@@ -1,129 +1,188 @@
-# TypeScript Patterns
+# Raid-Ledger Patterns
 
-Standard patterns and conventions for all TypeScript code produced by this toolkit.
+Patterns and conventions for the Raid-Ledger monorepo.
 
-## Data Models
+## Contract Patterns (`packages/contract`)
 
-Use TypeScript interfaces for type definitions, Zod schemas when runtime validation is needed:
+### Zod Schemas
 
-    interface Config {
-      /** Application name */
-      name: string;
-      /** Enable debug mode */
-      debug: boolean;
-    }
+All shared types are defined as Zod schemas in `packages/contract/src/schemas/`:
 
     import { z } from "zod";
 
-    const UserInputSchema = z.object({
-      email: z.string().email(),
-      age: z.number().int().min(0).max(150),
+    export const CreateRaidSchema = z.object({
+      name: z.string().min(1).max(100),
+      date: z.coerce.date(),
+      participants: z.array(z.string().uuid()).min(1),
     });
 
-    type UserInput = z.infer<typeof UserInputSchema>;
+    export type CreateRaid = z.infer<typeof CreateRaidSchema>;
 
-## File Paths
+### Export Convention
 
-Always use `node:path` and `node:fs/promises`, never string concatenation:
+Re-export from `packages/contract/src/index.ts`:
 
-    import { join } from "node:path";
-    import { mkdir, readFile } from "node:fs/promises";
-    import { homedir } from "node:os";
+    export * from "./schemas/raid";
+    export * from "./schemas/loot";
 
-    const configDir = join(homedir(), ".config", "myapp");
-    await mkdir(configDir, { recursive: true });
+Import in api/web as:
 
-## Logging
+    import { CreateRaidSchema, type CreateRaid } from "@raid-ledger/contract";
 
-Use structured logging (pino recommended), never `console.log` for debugging:
+## Backend Patterns (`api` — NestJS + Drizzle)
 
-    import pino from "pino";
+### Module Structure
 
-    const logger = pino({ name: "myapp" });
-    logger.info({ count }, "Processing items");
+    api/src/[feature]/
+    ├── [feature].module.ts
+    ├── [feature].controller.ts
+    ├── [feature].service.ts
+    ├── [feature].repository.ts    # Drizzle queries
+    └── dto/
+        └── [feature].dto.ts       # Response DTOs
 
-## HTTP Clients
+### Controller
 
-Use `fetch` (built-in) or `undici` for HTTP requests:
+    import { Controller, Post, Body, UseGuards } from "@nestjs/common";
+    import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+    import { CreateRaidSchema, type CreateRaid } from "@raid-ledger/contract";
+    import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
 
-    async function fetchData(url: string): Promise<Record<string, unknown>> {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    @Controller("raids")
+    @UseGuards(JwtAuthGuard)
+    export class RaidsController {
+      constructor(private readonly raidsService: RaidsService) {}
+
+      @Post()
+      async create(
+        @Body(new ZodValidationPipe(CreateRaidSchema)) dto: CreateRaid,
+      ) {
+        return this.raidsService.create(dto);
       }
-      return response.json() as Promise<Record<string, unknown>>;
     }
 
-## CLI Interfaces
+### Drizzle Queries
 
-Use `commander` with `chalk` for terminal output:
+    import { db } from "../drizzle/db";
+    import { raids } from "../drizzle/schema/raids";
+    import { eq } from "drizzle-orm";
 
-    import { Command } from "commander";
-    import chalk from "chalk";
+    export class RaidsRepository {
+      async findById(id: string) {
+        const [raid] = await db
+          .select()
+          .from(raids)
+          .where(eq(raids.id, id));
+        return raid ?? null;
+      }
 
-    const program = new Command();
+      async create(data: NewRaid) {
+        const [raid] = await db.insert(raids).values(data).returning();
+        return raid;
+      }
+    }
 
-    program
-      .command("greet <name>")
-      .description("Greet a user")
-      .action((name: string) => {
-        console.log(`Hello, ${chalk.bold(name)}!`);
+### Drizzle Schema
+
+    import { pgTable, uuid, varchar, timestamp } from "drizzle-orm/pg-core";
+
+    export const raids = pgTable("raids", {
+      id: uuid("id").primaryKey().defaultRandom(),
+      name: varchar("name", { length: 100 }).notNull(),
+      createdAt: timestamp("created_at").defaultNow().notNull(),
+    });
+
+### Error Handling
+
+Use NestJS built-in exceptions:
+
+    import { NotFoundException, BadRequestException } from "@nestjs/common";
+
+    throw new NotFoundException(`Raid ${id} not found`);
+
+## Frontend Patterns (`web` — React + TanStack Query + Zustand + Shadcn)
+
+### TanStack Query Hooks
+
+    import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+    import { type Raid } from "@raid-ledger/contract";
+
+    export function useRaidsQuery() {
+      return useQuery<Raid[]>({
+        queryKey: ["raids"],
+        queryFn: () => api.get("/raids").then((r) => r.data),
       });
-
-    program.parse();
-
-## Error Handling
-
-Define a project-level error class hierarchy:
-
-    class AppError extends Error {
-      constructor(message: string, public readonly code: string) {
-        super(message);
-        this.name = "AppError";
-      }
     }
 
-    class NotFoundError extends AppError {
-      constructor(resource: string, id: string) {
-        super(`${resource} not found: ${id}`, "NOT_FOUND");
-        this.name = "NotFoundError";
-      }
+    export function useCreateRaidMutation() {
+      const queryClient = useQueryClient();
+      return useMutation({
+        mutationFn: (data: CreateRaid) => api.post("/raids", data),
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["raids"] });
+        },
+      });
     }
 
-    class ValidationError extends AppError {
-      constructor(message: string) {
-        super(message, "VALIDATION_ERROR");
-        this.name = "ValidationError";
-      }
+### Zustand Store (client-only state)
+
+    import { create } from "zustand";
+
+    interface UiStore {
+      sidebarOpen: boolean;
+      toggleSidebar: () => void;
     }
 
-Never catch bare `unknown` without narrowing. Always provide context:
+    export const useUiStore = create<UiStore>((set) => ({
+      sidebarOpen: true,
+      toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
+    }));
 
-    try {
-      const result = process(data);
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        logger.error({ error }, "Failed to process data");
-        throw error;
-      }
-      throw error;
+### React Hook Form + Zod
+
+    import { useForm } from "react-hook-form";
+    import { zodResolver } from "@hookform/resolvers/zod";
+    import { CreateRaidSchema, type CreateRaid } from "@raid-ledger/contract";
+
+    export function RaidForm() {
+      const form = useForm<CreateRaid>({
+        resolver: zodResolver(CreateRaidSchema),
+      });
+      // ...
     }
 
-## Function Guidelines
+### Shadcn Components
+
+Use Shadcn UI components from `@/components/ui/`:
+
+    import { Button } from "@/components/ui/button";
+    import { Input } from "@/components/ui/input";
+    import {
+      Card,
+      CardContent,
+      CardHeader,
+      CardTitle,
+    } from "@/components/ui/card";
+
+## Cross-Cutting
+
+### Build Order
+
+Always build contract first when contract schemas change:
+
+    npm run build -w packages/contract
+    # Then api and web can consume the updated types
+
+### Import Rules
+
+- api/web import from `@raid-ledger/contract` — never import directly from `packages/contract/src`
+- api never imports from web, web never imports from api
+- Shared UI components live in `web/src/components/ui/` (Shadcn)
+- Shared hooks live in `web/src/hooks/`
+
+### Function Guidelines
 
 - Maximum 30 lines per function
 - Explicit return types on all exported functions
-- Explicit parameter types on all functions
-- JSDoc comments on all exported functions:
-
-      /**
-       * Calculate the weighted score for a list of items.
-       *
-       * @param items - The items to score.
-       * @param weight - Multiplier applied to the final score.
-       * @returns The weighted score.
-       * @throws {ValidationError} If weight is negative.
-       */
-      export function calculateScore(items: Item[], weight = 1.0): number {
-        // ...
-      }
+- JSDoc comments on all exported functions
+- Maximum file length: 300 lines
