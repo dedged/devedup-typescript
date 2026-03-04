@@ -30,7 +30,7 @@ Implement the following using strict TDD: $ARGUMENTS
 ## Prerequisites
 
 A spec should exist in `docs/specs/`. If no spec exists, inform the user and
-suggest running `/devedup-typescript:spec` first.
+suggest running `/devedup-rl:spec` first.
 
 ## Standards
 
