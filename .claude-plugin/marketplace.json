@@ -1,0 +1,16 @@
+{
+  "name": "devedup-rl",
+  "owner": {
+    "name": "dedge"
+  },
+  "plugins": [
+    {
+      "name": "devedup-rl",
+      "source": {
+        "source": "github",
+        "repo": "dedged/devedup-rl"
+      },
+      "description": "Development workflow plugin for the Raid-Ledger monorepo (NestJS + React + Drizzle + Zod). TDD enforcement, dual test runners, workspace-aware agent routing, and contract-first patterns."
+    }
+  ]
+}
